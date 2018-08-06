@@ -11,7 +11,6 @@ import com.mapbox.api.directions.v5.models.BannerComponents;
 import com.mapbox.api.directions.v5.models.BannerInstructions;
 import com.mapbox.api.directions.v5.models.BannerText;
 import com.mapbox.api.directions.v5.models.LegStep;
-import com.mapbox.services.android.navigation.ui.v5.instruction.InstructionLoader.BannerComponentNode;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -27,7 +26,7 @@ import java.util.List;
  * If a shield URL is found, {@link Picasso} is used to load the image.  Then, once the image is loaded,
  * a new {@link ImageSpan} is created and set to the appropriate position of the {@link Spannable}
  */
-public class ImageCoordinator {
+public class ImageCoordinator extends NodeCoordinator<ImageCoordinator.ImageNode> {
 
   private static ImageCoordinator instance;
   private boolean isInitialized;
@@ -170,10 +169,6 @@ public class ImageCoordinator {
     }
   }
 
-  private boolean hasImageUrl(BannerComponents components) {
-    return !TextUtils.isEmpty(components.imageBaseUrl());
-  }
-
   private void createTargets(TextView textView) {
     Spannable instructionSpannable = new SpannableString(textView.getText());
     for (final BannerShield bannerShield : bannerShieldList) {
@@ -200,6 +195,27 @@ public class ImageCoordinator {
       throw new RuntimeException("InstructionLoader must be initialized prior to loading image URLs");
     }
   }
+
+  @Override
+  boolean isNodeType(BannerComponents bannerComponents) {
+    return hasImageUrl(bannerComponents);
+  }
+
+  private boolean hasImageUrl(BannerComponents components) {
+    return !TextUtils.isEmpty(components.imageBaseUrl());
+  }
+
+  @Override
+  ImageNode setupNode(BannerComponents components, int index, int startIndex) {
+    addShieldInfo(components, index);
+    return new ImageNode(components, startIndex);
+  }
+
+  @Override
+  void postProcess(TextView textView, List<BannerComponentNode> bannerComponentNodes) {
+    loadImages(textView, bannerComponentNodes);
+  }
+
 
   static class ImageNode extends BannerComponentNode {
 

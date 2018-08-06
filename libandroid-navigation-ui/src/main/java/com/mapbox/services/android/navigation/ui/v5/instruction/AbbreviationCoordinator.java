@@ -3,7 +3,7 @@ package com.mapbox.services.android.navigation.ui.v5.instruction;
 import android.widget.TextView;
 
 import com.mapbox.api.directions.v5.models.BannerComponents;
-import com.mapbox.services.android.navigation.ui.v5.instruction.InstructionLoader.BannerComponentNode;
+import com.mapbox.core.utils.TextUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,7 +17,7 @@ import java.util.Map;
  * BannerComponents containing abbreviation information and given a list of BannerComponentNodes,
  * constructed by InstructionLoader.
  */
-class AbbreviationCoordinator {
+class AbbreviationCoordinator extends NodeCoordinator<AbbreviationCoordinator.AbbreviationNode> {
   private static final String SINGLE_SPACE = " ";
   private Map<Integer, List<Integer>> abbreviations;
   private TextViewUtils textViewUtils;
@@ -51,11 +51,11 @@ class AbbreviationCoordinator {
    * Using the abbreviations HashMap which should already be populated, abbreviates the text in the
    * bannerComponentNodes until the text fits the given TextView.
    *
-   * @param bannerComponentNodes containing the text to construct
    * @param textView to check the text fits
+   * @param bannerComponentNodes containing the text to construct
    * @return the properly abbreviated string that will fit in the TextView
    */
-  String abbreviateBannerText(List<BannerComponentNode> bannerComponentNodes, TextView textView) {
+  String abbreviateBannerText(TextView textView, List<BannerComponentNode> bannerComponentNodes) {
     String bannerText = join(bannerComponentNodes);
 
     if (abbreviations.isEmpty()) {
@@ -128,6 +128,27 @@ class AbbreviationCoordinator {
     }
 
     return stringBuilder.toString();
+  }
+
+  @Override
+  boolean isNodeType(BannerComponents bannerComponents) {
+    return hasAbbreviation(bannerComponents);
+  }
+
+  private boolean hasAbbreviation(BannerComponents components) {
+    return !TextUtils.isEmpty(components.abbreviation());
+  }
+
+  @Override
+  AbbreviationNode setupNode(BannerComponents components, int index, int startIndex) {
+    addPriorityInfo(components, index);
+    return new AbbreviationCoordinator.AbbreviationNode(components, startIndex);
+  }
+
+  @Override
+  void preProcess(TextView textView, List<BannerComponentNode> bannerComponentNodes) {
+    String text = abbreviateBannerText(textView, bannerComponentNodes);
+    textView.setText(text);
   }
 
   /**
